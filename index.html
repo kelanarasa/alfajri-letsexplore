@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#0a2236">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Al-Fajri: Let's Explore</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- skala 16:9, layar penuh, dan pemberitahuan landscape; dimuat paling awal -->
+  <script src="layar.js"></script>
+</head>
+<body>
+  <!-- ================= BINGKAI 16:9 (960 x 540, otomatis diskalakan) ================= -->
+  <div id="frame">
+
+    <!-- ================= LAYAR PEMBUKA: satu ketukan membuka izin suara dan musik ================= -->
+    <section id="splash" class="splash" aria-label="Layar pembuka">
+      <div class="splash-art"><div class="hero-ico" data-asset="buildings.center"></div></div>
+      <h1 class="splash-title">Al-Fajri<small>Let's Explore</small></h1>
+      <div class="splash-bottom">
+        <button id="splashBtn" class="btn primary big" type="button">Ketuk untuk Bermain</button>
+        <p class="credit">Developed by Kurnia Ichsan</p>
+      </div>
+      <button class="btn tool splash-fs" type="button" data-fs aria-label="Layar penuh" title="Layar penuh">
+        <svg class="i ic-enter" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+        <svg class="i ic-exit" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>
+      </button>
+    </section>
+
+    <!-- ================= MENU UTAMA, HALAMAN 1: pelajaran, perjalanan, tingkat kesulitan ================= -->
+    <section id="home" class="home">
+      <div class="home-hero">
+        <div class="hero-art"><div class="hero-ico" data-asset="buildings.center"></div></div>
+        <h1>Al-Fajri<small>Let's Explore</small></h1>
+        <p class="hero-sub">Jelajahi Papan, Jawab Soal, Kumpulkan Poin.</p>
+        <p class="hero-hint">Baru pertama main? Ketuk tombol <b>?</b> di bawah untuk membaca petunjuk.</p>
+      </div>
+
+      <div class="home-main">
+        <fieldset class="field f-subject">
+          <legend>Pelajaran</legend>
+          <button id="subjectOpen" class="subj-current" type="button" aria-haspopup="dialog" aria-controls="subjectPick">
+            <span id="subjectCurIco" class="subj-ico" aria-hidden="true"></span>
+            <span class="subj-cur-text"><b id="subjectCurName"></b><small id="subjectCurCount"></small></span>
+            <span class="subj-cur-change">Ganti pelajaran
+              <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
+          </button>
+          <p id="subjectInfo" class="subject-info"></p>
+        </fieldset>
+
+        <fieldset class="field f-journey">
+          <legend>Perjalanan <small>(Target Poin)</small></legend>
+          <div id="journeyBtns" class="seg seg-journey">
+            <button type="button" class="seg-btn" data-v="short" aria-pressed="false">Short Journey<small>80 poin</small></button>
+            <button type="button" class="seg-btn" data-v="long" aria-pressed="false">Long Journey<small>140 poin</small></button>
+            <button type="button" class="seg-btn" data-v="traveler" aria-pressed="false">Traveler<small>200 poin</small></button>
+          </div>
+        </fieldset>
+
+        <fieldset class="field f-diff">
+          <legend>Tingkat kesulitan <small>(Timer Soal)</small></legend>
+          <div id="diffBtns" class="seg seg-diff">
+            <button type="button" class="seg-btn" data-v="mudah" aria-pressed="false">Mudah<small>Tanpa timer</small></button>
+            <button type="button" class="seg-btn" data-v="sedang" aria-pressed="false">Sedang<small>30 detik</small></button>
+            <button type="button" class="seg-btn" data-v="sulit" aria-pressed="false">Sulit<small>15 detik</small></button>
+            <button type="button" class="seg-btn" data-v="legenda" aria-pressed="false">Legenda<small>8 detik</small></button>
+          </div>
+        </fieldset>
+      </div>
+
+      <!-- tombol-tombol menu berada di bagian bawah layar -->
+      <div class="home-actions">
+        <div id="continueBox" class="continue" hidden>
+          <p id="continueInfo"></p>
+          <button id="continueBtn" class="btn accent" type="button">Lanjutkan</button>
+        </div>
+        <button class="btn tool" type="button" data-help aria-label="Petunjuk bermain" title="Petunjuk bermain" aria-haspopup="dialog">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1.9-1.1 1.8M12 17h.01"/></svg>
+        </button>
+        <button class="btn tool" type="button" data-sound aria-label="Matikan suara" aria-pressed="true" title="Suara">
+          <svg class="i ic-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zM16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>
+          <svg class="i ic-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zM17 9l5 6M22 9l-5 6"/></svg>
+        </button>
+        <button class="btn tool" type="button" data-fs aria-label="Layar penuh" title="Layar penuh">
+          <svg class="i ic-enter" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+          <svg class="i ic-exit" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>
+        </button>
+        <button id="toSetupBtn" class="btn primary big go" type="button">Selanjutnya
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- ================= MENU UTAMA, HALAMAN 2: pemain, map, dadu ================= -->
+    <section id="setupView" class="setup" hidden>
+      <div class="setup-left">
+      <fieldset class="field f-players">
+        <legend>
+          <span>Nama dan karakter</span>
+          <span class="count-pick">Jumlah Pemain
+            <span id="countBtns" class="seg" role="group" aria-label="Jumlah pemain">
+              <button type="button" class="seg-btn" data-v="1" aria-pressed="false">1</button>
+              <button type="button" class="seg-btn" data-v="2" aria-pressed="false">2</button>
+              <button type="button" class="seg-btn" data-v="3" aria-pressed="false">3</button>
+              <button type="button" class="seg-btn" data-v="4" aria-pressed="false">4</button>
+            </span>
+          </span>
+        </legend>
+        <div id="setupRows" class="rows"></div>
+      </fieldset>
+
+        <!-- pilihan mode permainan (tombol dibuat otomatis oleh game.js dari daftar MODES) -->
+        <fieldset class="field f-mode">
+          <legend>Mode permainan</legend>
+          <div id="modeBtns" class="mode-btns" role="group" aria-label="Pilih mode permainan"></div>
+          <p id="modeDesc" class="mode-desc" aria-live="polite"></p>
+        </fieldset>
+      </div>
+
+      <div class="setup-side">
+        <fieldset class="field f-map">
+          <legend>Map <small>(latar dan musik)</small></legend>
+          <!-- kartu map dibuat otomatis oleh game.js dari Assets.config.maps -->
+          <div id="mapBtns" class="opts" role="group" aria-label="Pilih map"></div>
+        </fieldset>
+        <fieldset class="field f-dice">
+          <legend>Dadu <small>(tampilan dan suara)</small></legend>
+          <!-- kartu dadu dibuat otomatis oleh game.js dari Assets.config.diceSets -->
+          <div id="diceBtns" class="opts" role="group" aria-label="Pilih dadu"></div>
+        </fieldset>
+      </div>
+
+      <div class="home-actions">
+        <button id="backBtn" class="btn big" type="button">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Kembali
+        </button>
+        <button class="btn tool" type="button" data-help aria-label="Petunjuk bermain" title="Petunjuk bermain" aria-haspopup="dialog">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1.9-1.1 1.8M12 17h.01"/></svg>
+        </button>
+        <button class="btn tool" type="button" data-sound aria-label="Matikan suara" aria-pressed="true" title="Suara">
+          <svg class="i ic-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zM16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>
+          <svg class="i ic-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zM17 9l5 6M22 9l-5 6"/></svg>
+        </button>
+        <button class="btn tool" type="button" data-fs aria-label="Layar penuh" title="Layar penuh">
+          <svg class="i ic-enter" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+          <svg class="i ic-exit" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>
+        </button>
+        <button id="startBtn" class="btn primary big go" type="button">Mulai Main</button>
+      </div>
+    </section>
+
+    <!-- ================= PERMAINAN ================= -->
+    <main id="gameView" class="app" hidden>
+      <div class="col-main">
+        <!-- kartu pemain dibuat otomatis oleh game.js sesuai pilihan di menu -->
+        <div id="players" class="players"></div>
+
+        <section id="stage" class="board-wrap">
+          <div id="board" class="board">
+            <div class="center"><span class="bld" data-asset="buildings.center"></span></div>
+            <!-- petak dan bidak dibuat otomatis oleh game.js -->
+          </div>
+        </section>
+
+        <p id="message" class="message" aria-live="polite">Tekan "Kocok Dadu" untuk memulai.</p>
+
+        <!-- notifikasi skill: kecil, di kiri atas di bawah kartu pemain 1, tidak menghentikan permainan -->
+        <div id="skillFeed" class="skill-feed" aria-live="polite"></div>
+      </div>
+
+      <aside class="panel">
+        <h1 class="logo">Al-Fajri<small>Let's Explore</small></h1>
+        <p id="turnText" class="turn"></p>
+        <p id="roundText" class="round"></p>
+
+        <ul class="legend">
+          <li style="--c:var(--easy)"><i></i>Soal mudah</li>
+          <li style="--c:var(--mid)"><i></i>Soal sedang</li>
+          <li style="--c:var(--hard)"><i></i>Soal sulit</li>
+          <li style="--c:var(--bonus)"><i></i>Event</li>
+          <li style="--c:var(--spec)"><i></i>Pos khusus</li>
+          <li style="--c:var(--free)"><i></i>Free Will</li>
+        </ul>
+
+        <!-- tombol permainan di bagian bawah -->
+        <div class="dock">
+          <div class="dice-row">
+            <div id="dice" class="dice" role="img" aria-label="Dadu"></div>
+            <div class="stat"><span class="stat-label">Dadu</span><strong id="diceText">-</strong></div>
+          </div>
+          <button id="rollBtn" class="btn primary big" type="button"><span data-asset="dice.roll"></span>Kocok Dadu</button>
+          <div class="tools">
+            <button id="menuBtn" class="btn tool" type="button" aria-label="Menu utama" title="Menu utama">
+              <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>
+            </button>
+            <button id="restartBtn" class="btn tool" type="button" aria-label="Mulai lagi" title="Mulai lagi">
+              <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.5-5.8M20 4v5h-5"/></svg>
+            </button>
+            <button id="soundBtn" class="btn tool" type="button" data-sound aria-label="Matikan suara" aria-pressed="true" title="Suara">
+              <svg class="i ic-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zM16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>
+              <svg class="i ic-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zM17 9l5 6M22 9l-5 6"/></svg>
+            </button>
+            <button class="btn tool" type="button" data-fs aria-label="Layar penuh" title="Layar penuh">
+              <svg class="i ic-enter" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+              <svg class="i ic-exit" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>
+            </button>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- soal -->
+    <div id="modal" class="overlay" hidden>
+      <div id="modalCard" class="card q-card" role="dialog" aria-modal="true" aria-labelledby="qText" tabindex="-1">
+        <div class="q-head">
+          <span id="badge" class="badge"></span><span id="fxIcon" class="fx" aria-hidden="true" hidden></span>
+          <div id="timer" class="timer" hidden aria-hidden="true"><div class="timer-bar"><i id="timerFill"></i></div><span id="timerText" class="timer-text">10</span></div>
+        </div>
+        <h2 id="qText" class="q-text"></h2>
+        <div id="options" class="options"></div>
+        <p id="feedback" class="feedback" hidden></p>
+        <button id="nextBtn" class="btn primary big" type="button" hidden>Lanjut</button>
+      </div>
+    </div>
+
+    <!-- pos event: pilih 1 dari 3 kartu (kartu dibuat otomatis oleh game.js) -->
+    <div id="eventPick" class="overlay" hidden>
+      <div id="eventBox" class="card ev-box" role="dialog" aria-modal="true" aria-labelledby="evTitle" tabindex="-1">
+        <div class="q-head"><span id="evBadge" class="badge b-event"></span></div>
+        <h2 id="evTitle" class="q-text">Pos Event! Pilih satu kartu</h2>
+        <p id="evHint" class="ev-hint">Ketuk salah satu kartu untuk membukanya.</p>
+        <div id="evCards" class="ev-cards"></div>
+        <p id="evResult" class="feedback info" hidden></p>
+        <button id="evNext" class="btn primary big" type="button" hidden>Lanjut</button>
+      </div>
+    </div>
+
+    <!-- pos Free Will: pemain bebas memilih jenis pos tanpa berpindah (tombol dibuat otomatis oleh game.js) -->
+    <div id="freePick" class="overlay" hidden>
+      <div id="freeBox" class="card fw-box" role="dialog" aria-modal="true" aria-labelledby="fwTitle" tabindex="-1">
+        <div class="q-head"><span id="fwBadge" class="badge b-freewill"></span></div>
+        <h2 id="fwTitle" class="q-text">Free Will! Pilih satu</h2>
+        <p class="ev-hint">Kamu bebas memilih jenis pos yang mau diambil, tanpa berpindah tempat.</p>
+        <div id="fwBtns" class="fw-btns"></div>
+      </div>
+    </div>
+
+    <!-- True Explorer: tawaran membeli / mengambil alih pos (tombol dibuat otomatis oleh game.js) -->
+    <div id="propPick" class="overlay" hidden>
+      <div id="propBox" class="card prop-box" role="dialog" aria-modal="true" aria-labelledby="propTitle" tabindex="-1">
+        <div class="q-head"><span id="propBadge" class="badge b-prop"></span></div>
+        <h2 id="propTitle" class="q-text"></h2>
+        <div id="propInfo" class="prop-info"></div>
+        <div id="propBtns" class="prop-btns"></div>
+      </div>
+    </div>
+
+    <!-- True Explorer: pilih 1 dari 3 kartu skill sebelum kocokan pertama (kartu dibuat otomatis oleh game.js) -->
+    <div id="skillPick" class="overlay" hidden>
+      <div id="skillBox" class="card ev-box" role="dialog" aria-modal="true" aria-labelledby="skTitle" tabindex="-1">
+        <div class="q-head"><span id="skBadge" class="badge b-event"></span></div>
+        <h2 id="skTitle" class="q-text">Pilih Skill! Satu kartu untuk satu permainan</h2>
+        <p id="skHint" class="ev-hint">Ketuk salah satu kartu. Skill terlihat oleh semua pemain.</p>
+        <div id="skCards" class="ev-cards"></div>
+        <p id="skResult" class="feedback info" hidden></p>
+        <p id="skTaken" class="sk-taken"></p>
+      </div>
+    </div>
+
+    <!-- pemenang -->
+    <div id="win" class="overlay" hidden>
+      <div class="card win-card" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+        <h2 id="winTitle" class="win-title">Selamat!</h2>
+        <p id="winText"></p>
+        <table id="winResult" class="rtable"></table>
+        <div class="win-actions">
+          <button id="winMenuBtn" class="btn ghost big" type="button">Kembali ke Menu</button>
+          <button id="againBtn" class="btn primary big" type="button">Main Lagi</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- konfirmasi (pengganti confirm() bawaan browser, supaya layar penuh tidak keluar sendiri) -->
+    <div id="confirm" class="overlay top" hidden>
+      <div class="card confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="confirmText">
+        <p id="confirmText" class="confirm-text"></p>
+        <div class="win-actions">
+          <button id="confirmNo" class="btn ghost big" type="button">Batal</button>
+          <button id="confirmYes" class="btn primary big" type="button">Ya</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- pilih pelajaran (jendela pop up dari menu utama) -->
+    <div id="subjectPick" class="overlay" hidden>
+      <div class="card pick-card" role="dialog" aria-modal="true" aria-labelledby="pickTitle">
+        <h2 id="pickTitle" class="pick-title">Pilih pelajaran</h2>
+        <!-- tombol pelajaran dibuat otomatis oleh game.js dari daftar soal/soal.js -->
+        <div id="subjectBtns" class="subjects"></div>
+        <button id="subjectClose" class="btn ghost big" type="button">Tutup</button>
+      </div>
+    </div>
+
+    <!-- petunjuk bermain (jendela pop up dari menu utama; isi dibuat otomatis oleh game.js) -->
+    <div id="helpPick" class="overlay" hidden>
+      <div class="card pick-card help-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+        <h2 id="helpTitle" class="pick-title">Petunjuk Bermain</h2>
+        <div id="helpTabs" class="help-tabs" role="tablist"></div>
+        <div id="helpBody" class="help-body"></div>
+        <button id="helpClose" class="btn primary big" type="button">Mengerti</button>
+      </div>
+    </div>
+
+    <p id="toast" class="toast" role="status" hidden></p>
+  </div>
+
+  <!-- ================= PEMBERITAHUAN: PUTAR KE LANDSCAPE (hanya tampil di HP/tablet posisi tegak) ================= -->
+  <div id="putar" class="putar" role="alert" aria-live="assertive">
+    <div class="putar-box">
+      <div class="phone" aria-hidden="true"><i></i></div>
+      <h2>Putar layar ke posisi mendatar</h2>
+      <p>Permainan berjalan setelah HP dalam posisi landscape. Jika layar tidak berputar, matikan kunci rotasi layar.</p>
+      <button class="btn primary big" type="button" data-fs>Layar penuh dan kunci mendatar</button>
+    </div>
+  </div>
+
+  <script src="assets.js"></script>
+  <!-- DAFTAR PELAJARAN: tambahkan satu baris per file soal, harus sebelum game.js -->
+  <script src="soal/soal.js"></script>
+  <script src="soal/kelasi.js"></script>
+  <script src="soal/kelasii.js"></script>
+  <script src="soal/kelasiii.js"></script>
+  <script src="soal/kelasiv.js"></script>
+  <script src="soal/kelasv.js"></script>
+  <script src="soal/kelasvi.js"></script>
+  <script src="soal/barab.js"></script>
+  <script src="soal/binggris.js"></script>
+  <script src="soal/bsunda.js"></script>
+  <script src="soal/pjok.js"></script>
+  <script src="soal/pai1.js"></script>
+  <script src="soal/tahfidz.js"></script>
+  <script src="soal/tkasd.js"></script>
+  <script src="soal/keindonesiaan.js"></script>
+  <script src="soal/pengetahuan.js"></script>
+  <script src="soal/pengetahuand.js"></script>
+  <script src="soal/kebudayaan.js"></script>
+  <script src="soal/trivia.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

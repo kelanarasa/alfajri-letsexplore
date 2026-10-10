@@ -1,0 +1,774 @@
+/* =====================================================================
+   Al-Fajri: Let's Explore - tampilan landscape 16:9
+   Seluruh permainan berada di #frame berukuran desain 960 x 540.
+   layar.js mengatur --fit supaya bingkai selalu muat di layar apa pun.
+   ===================================================================== */
+:root {
+  --ink: #12304a;
+  --frame: #12304a;
+  --deep: #0a2236;
+  --lagoon: #0e7c86;
+  --go: #ff8a1f;     --go-dark: #b95c00;
+  --easy: #2fb872;  --easy-bg: #dff6ea;
+  --mid: #f5b800;   --mid-bg: #fff3c9;
+  --hard: #ee4d68;  --hard-bg: #ffe2e7;
+  --bonus: #8b5cf6; --bonus-bg: #ebe2ff;
+  --spec: #2490f0;  --spec-bg: #daecff;
+  --free: #0f9d9a;  --free-bg: #d6f4f1;
+  --sy: .58;
+  --bb: rotate(-45deg) scaleY(calc(1 / var(--sy)));
+  /* tema map: warna cadangan latar belakang papan (--stage-bg) dan bagian tengah papan (--center-bg).
+     Gambar map (--stage-img / --board-img, diisi Assets.mapStyle) ditaruh di atasnya. */
+  --stage-bg: radial-gradient(circle at 50% 35%, #f2fbff, #b4dcf0);
+  --center-bg: radial-gradient(circle at 18% 12%, rgba(63, 200, 196, .7), transparent 45%), linear-gradient(160deg, var(--lagoon), var(--frame));
+  font-family: "Nunito", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  color: var(--ink);
+}
+[data-map="map2"] {   /* Pulau Tropis */
+  --stage-bg: radial-gradient(circle at 50% 30%, #fffbe0, #bfeccf 45%, #5fc7c0);
+  --center-bg: radial-gradient(circle at 20% 15%, rgba(255, 244, 170, .55), transparent 45%), linear-gradient(160deg, #1fa37a, #0b5f57);
+}
+[data-map="map3"] {   /* Kota Senja */
+  --stage-bg: linear-gradient(180deg, #ffd59a 0%, #f59b86 45%, #8a63b8 100%);
+  --center-bg: radial-gradient(circle at 80% 10%, rgba(255, 190, 120, .5), transparent 45%), linear-gradient(160deg, #5b3b8c, #231a45);
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 3px solid var(--go); outline-offset: 2px; }
+
+html, body { height: 100%; margin: 0; overflow: hidden; background: var(--deep); overscroll-behavior: none; }
+body { position: fixed; inset: 0; -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+
+/* ---------- Bingkai 16:9 ---------- */
+#frame {
+  position: absolute; left: 50%; top: 50%;
+  width: 960px; height: 540px;
+  transform: translate(-50%, -50%) scale(var(--fit, 1));
+  transform-origin: center;
+  overflow: hidden;
+  font-size: 16px;
+  background: linear-gradient(180deg, #bfe6f8 0%, #e6f6fd 55%, #f3fbff 100%);
+}
+
+.home, .setup, .app { animation: screenIn .45s cubic-bezier(.2, .8, .2, 1) both; }
+
+/* ---------- Tombol ---------- */
+.btn {
+  font: inherit; font-weight: 800; font-size: 16px; color: var(--ink);
+  min-height: 48px; padding: 8px 18px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 14px; cursor: pointer;
+  background: #fff; box-shadow: 0 4px 0 rgba(18, 48, 74, .25);
+  touch-action: manipulation;
+  transition: transform .08s ease, box-shadow .08s ease, filter .15s ease;
+}
+.btn:hover:not(:disabled) { filter: brightness(1.04); }
+.btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 rgba(18, 48, 74, .25); }
+.btn:disabled { opacity: .5; cursor: not-allowed; animation: none !important; }
+.btn.primary { background: var(--go); color: #fff; box-shadow: 0 4px 0 var(--go-dark); }
+.btn.primary:active:not(:disabled) { box-shadow: 0 1px 0 var(--go-dark); }
+.btn.accent { background: var(--lagoon); color: #fff; box-shadow: 0 4px 0 #095a61; }
+.btn.accent:active:not(:disabled) { box-shadow: 0 1px 0 #095a61; }
+.btn.big { min-height: 60px; font-size: 20px; padding: 8px 26px; }
+.btn.tool { width: 52px; min-height: 52px; padding: 0; }
+.btn [data-asset]:not(:empty) { margin-right: 8px; }
+
+.i { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.ic-exit { display: none; }
+html.is-fs .ic-enter { display: none; }
+html.is-fs .ic-exit { display: inline; }
+html.no-fs [data-fs] { display: none !important; }
+[data-sound][aria-pressed="true"] .ic-off, [data-sound][aria-pressed="false"] .ic-on { display: none; }
+[data-sound][aria-pressed="false"] { color: var(--hard); }
+
+/* =====================================================================
+   MENU UTAMA
+   ===================================================================== */
+.home {
+  position: absolute; inset: 0;
+  display: grid; grid-template-columns: 270px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto;
+  gap: 12px 16px; padding: 16px 20px;
+}
+
+.home-hero {
+  grid-row: 1 / 3;
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+  padding: 18px 16px 16px; border-radius: 22px; color: #fff;
+  background:
+    radial-gradient(circle at 15% 8%, rgba(63, 200, 196, .55), transparent 48%),
+    linear-gradient(165deg, var(--lagoon), var(--frame) 85%);
+  box-shadow: 0 8px 0 rgba(18, 48, 74, .2);
+}
+.hero-art {
+  display: grid; place-items: center; width: 150px; height: 150px; flex: none; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, .22), rgba(255, 255, 255, .05) 70%);
+  box-shadow: 0 0 0 10px rgba(255, 255, 255, .07), 0 0 0 22px rgba(255, 255, 255, .04);
+}
+.hero-ico { font-size: 60px; line-height: 1; }
+.hero-ico .asset-img { width: 128px; height: 128px; }
+.home-hero h1 { margin: 20px 0 0; font-size: 36px; line-height: 1; font-weight: 900; letter-spacing: -.01em; }
+.home-hero h1 small { display: block; margin-top: 6px; font-size: 20px; font-weight: 700; color: #ffd9b0; letter-spacing: 0; }
+.hero-sub { margin: 10px 0 0; font-weight: 700; font-size: 14px; opacity: .9; }
+.hero-hint { margin: 22px 0 0; padding: 9px 12px; font-size: 13px; line-height: 1.35; font-weight: 600; border-radius: 14px; background: rgba(10, 34, 54, .35); }
+.hero-hint b { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #fff; color: var(--ink); font-size: 13px; line-height: 1; }
+
+/* halaman 1: tiga kotak (pelajaran, perjalanan, kesulitan) mengisi tinggi layar */
+.home-main {
+  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px; min-height: 0;
+}
+.home-main .f-journey, .home-main .f-diff { display: flex; flex-direction: column; padding: 12px 14px 14px; }
+.home-main .f-journey > legend, .home-main .f-diff > legend { font-size: 18px; margin-bottom: 8px; }
+.home-main .seg { flex: 1; min-height: 0; gap: 10px; }
+.home-main .seg-btn { min-height: 0; gap: 4px; font-size: 20px; border-radius: 16px; }
+.home-main .seg-btn small { font-size: 13px; }
+.home-main .f-subject { padding-bottom: 14px; }
+.home-main .subj-current { min-height: 62px; }
+.field {
+  min-width: 0; min-height: 0; margin: 0; padding: 10px 14px 12px;
+  border: 0; border-radius: 18px; background: #fff; box-shadow: 0 4px 0 rgba(18, 48, 74, .12);
+}
+.field > legend { float: left; width: 100%; padding: 0; margin: 0 0 6px; font-weight: 900; font-size: 16px; }
+.field > legend + * { clear: both; }
+.field > legend small { font-weight: 700; opacity: .6; font-size: 13px; }
+.f-journey > legend, .f-diff > legend { white-space: nowrap; }
+.f-players { display: flex; flex-direction: column; }
+.f-players > legend { display: flex; align-items: center; justify-content: space-between; }
+.count-pick { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; }
+.count-pick .seg { gap: 4px; }
+.count-pick .seg-btn { width: 34px; min-height: 30px; padding: 0; font-size: 16px; border-radius: 10px; }
+
+.subjects { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; }
+.subj-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  min-height: 62px; padding: 6px; font: inherit; font-weight: 800; font-size: 15px; color: var(--ink);
+  background: #f2f8fc; border: 2px solid #c9dceb; border-radius: 14px; cursor: pointer; touch-action: manipulation;
+  transition: background .15s ease, transform .1s ease;
+}
+.subj-btn small { font-size: 12px; font-weight: 700; opacity: .7; }
+.subj-btn[aria-pressed="true"] { background: var(--go); border-color: var(--go-dark); color: #fff; box-shadow: 0 3px 0 var(--go-dark); }
+.subj-ico { font-size: 22px; line-height: 1; }
+/* tombol pelajaran terpilih di menu: diketuk untuk membuka jendela pilihan */
+.subj-current {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 54px; padding: 6px 10px 6px 14px;
+  font: inherit; color: var(--ink); text-align: left; background: #f2f8fc; border: 2px solid #c9dceb; border-radius: 14px;
+  cursor: pointer; touch-action: manipulation;
+}
+.subj-current:active { transform: translateY(1px); }
+.subj-cur-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.subj-cur-text b { font-size: 17px; font-weight: 900; line-height: 1.15; }
+.subj-cur-text small { font-size: 12px; font-weight: 700; opacity: .7; }
+.subj-cur-change {
+  flex: none; display: inline-flex; align-items: center; gap: 4px; padding: 7px 10px 7px 14px;
+  font-weight: 800; font-size: 13px; color: #fff; background: var(--go); border-radius: 99px; box-shadow: 0 3px 0 var(--go-dark);
+}
+.subj-cur-change .i { width: 16px; height: 16px; stroke-width: 3; }
+
+/* jendela pop up pilih pelajaran */
+.pick-card { width: min(100%, 720px); display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+.pick-title { flex: none; margin: 0; font-size: 22px; font-weight: 900; text-align: center; }
+.pick-card .subjects {
+  flex: 1; min-height: 0; overflow-y: auto; padding: 2px 6px 6px 2px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); align-content: start;
+}
+.pick-card .subjects::-webkit-scrollbar { width: 8px; }
+.pick-card .subjects::-webkit-scrollbar-thumb { background: #c9dceb; border-radius: 99px; }
+.pick-card .subj-btn { min-height: 76px; }
+.pick-card > .btn { flex: none; }
+
+.subject-info { margin: 6px 2px 0; font-size: 12px; font-weight: 700; opacity: .75; line-height: 1.3; }
+
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
+.seg-btn {
+  font: inherit; font-weight: 900; font-size: 22px; color: var(--ink);
+  min-height: 50px; padding: 4px; border-radius: 14px; cursor: pointer;
+  background: #f2f8fc; border: 2px solid #c9dceb; touch-action: manipulation;
+}
+.seg-btn[aria-pressed="true"] { background: var(--go); border-color: var(--go-dark); color: #fff; box-shadow: 0 3px 0 var(--go-dark); }
+/* perjalanan dan tingkat kesulitan: nama + keterangan kecil (target poin / timer) */
+.seg-diff, .seg-journey { gap: 5px; }
+.seg-journey .seg-btn { font-size: 13px; }
+.seg-diff .seg-btn, .seg-journey .seg-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 44px; padding: 2px 0; font-size: 14px; line-height: 1.1; white-space: nowrap; }
+.seg-diff .seg-btn small, .seg-journey .seg-btn small { font-size: 10px; font-weight: 700; opacity: .75; }
+
+.rows { flex: 1; min-height: 0; overflow-y: auto; display: grid; gap: 8px; align-content: start; padding-right: 4px; }
+.rows::-webkit-scrollbar { width: 8px; }
+.rows::-webkit-scrollbar-thumb { background: #c9dceb; border-radius: 99px; }
+.prow { display: flex; align-items: center; gap: 12px; padding: 6px 10px; border-radius: 14px; background: #f2f8fc; border-left: 7px solid var(--ring, var(--go)); }
+.prow-top { flex: none; width: 200px; display: flex; align-items: center; gap: 8px; }
+.prow-ico { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: #fff; font-size: 26px; line-height: 1; box-shadow: 0 0 0 3px var(--ring, var(--go)); }
+.prow-ico img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
+.prow-name { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.prow-name label { font-size: 11px; font-weight: 800; opacity: .7; }
+.prow-name input { width: 100%; min-height: 38px; padding: 4px 10px; font: inherit; font-weight: 800; font-size: 15px; color: var(--ink); background: #fff; border: 2px solid #c9dceb; border-radius: 10px; user-select: text; }
+.chars { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 5px; }
+.char-btn { width: 36px; height: 36px; display: grid; place-items: center; font-size: 22px; line-height: 1; padding: 2px; background: #fff; border: 2px solid #c9dceb; border-radius: 12px; cursor: pointer; touch-action: manipulation; }
+.char-btn img { width: 100%; height: 100%; object-fit: contain; }
+.char-btn.on { border-color: var(--ring, var(--go)); box-shadow: 0 0 0 3px var(--ring, var(--go)); }
+.char-btn:disabled { opacity: .28; cursor: not-allowed; }
+
+/* tombol menu: di bagian bawah layar */
+.home-actions { grid-column: 2; display: flex; align-items: center; gap: 12px; }
+.continue { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 14px; border-radius: 16px; background: #fff; box-shadow: 0 4px 0 rgba(18, 48, 74, .12); }
+.continue p { flex: 1; min-width: 0; margin: 0; font-weight: 800; font-size: 13px; line-height: 1.25; }
+.go { flex: none; margin-left: auto; min-width: 210px; min-height: 64px; font-size: 22px; }
+.go .i, #backBtn .i { width: 22px; height: 22px; stroke-width: 2.8; }
+.go .i { margin-left: 8px; }
+#backBtn .i { margin-right: 8px; }
+#backBtn { flex: none; min-width: 150px; min-height: 64px; font-size: 20px; }
+
+/* =====================================================================
+   PERMAINAN
+   ===================================================================== */
+.app {
+  position: absolute; inset: 0;
+  display: grid; grid-template-columns: minmax(0, 1fr) 236px; grid-template-rows: minmax(0, 1fr);
+  gap: 12px; padding: 12px 14px;
+}
+.col-main { display: flex; flex-direction: column; gap: 8px; min-width: 0; min-height: 0; }
+
+/* kartu pemain */
+.players { flex: none; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; }
+.player { min-width: 0; background: #fff; border-radius: 14px; padding: 6px 10px 7px; border: 3px solid transparent; box-shadow: 0 3px 0 rgba(18, 48, 74, .14); transition: border-color .2s ease; }
+/* Warna pemain sengaja berbeda dari warna papan (merah, kuning, hijau, ungu, biru, teal) supaya tidak tersamarkan */
+:root { --pl0: #ff8a1f; --pl1: #d61f9d; --pl2: #8b5a2b; --pl3: #6b7280; }   /* oren, pink magenta, cokelat, abu-abu */
+.player.p0, .piece.p0, .prow.p0 { --ring: var(--pl0); }
+.player.p1, .piece.p1, .prow.p1 { --ring: var(--pl1); }
+.player.p2, .piece.p2, .prow.p2 { --ring: var(--pl2); }
+.player.p3, .piece.p3, .prow.p3 { --ring: var(--pl3); }
+.player.active { border-color: var(--ring); animation: turnGlow 1.8s ease-in-out infinite; }
+.pname { display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 14px; white-space: nowrap; overflow: hidden; }
+.pname > span:nth-child(2) { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.pname .asset-img { width: 22px; height: 22px; }
+.goal { margin-left: auto; font-size: 11px; font-weight: 800; opacity: .65; }
+.pinfo { display: flex; justify-content: space-between; gap: 6px; font-size: 13px; font-weight: 700; }
+.bar { height: 6px; background: #e3eef6; border-radius: 99px; margin-top: 4px; overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--ring); transition: width .3s ease; }
+
+/* ---------- Papan ---------- */
+.board-wrap {
+  flex: 1; min-height: 0; position: relative; overflow: hidden;
+  container-type: size;
+  border-radius: 20px;
+}
+/* Latar belakang papan berada di lapisan sendiri supaya ikut zoom/geser kamera (diatur camera.apply di game.js).
+   Variabel --bgz, --bgx, --bgy dihitung agar tepi gambar tidak pernah terlihat. */
+.board-wrap::before {
+  content: ""; position: absolute; inset: 0;
+  background-image: var(--stage-img, none), var(--stage-bg); background-size: cover; background-position: center;
+  transform-origin: 50% 52%;      /* sama dengan titik pusat papan */
+  transform: translate(var(--bgx, 0px), var(--bgy, 0px)) scale(var(--bgz, 1));
+  transition: transform .5s ease;
+  will-change: transform;
+}
+.board {
+  /* kamera isometrik: papan datar diputar 45 derajat lalu ditekan secara vertikal.
+     Variabel --zoom, --panx, --pany diatur oleh objek camera di game.js */
+  position: absolute; left: 50%; top: 52%;
+  width: min(70.7cqw, 110cqh);
+  aspect-ratio: 1 / 1;
+  container-type: inline-size;
+  transform: translate(calc(-50% + var(--panx, 0px)), calc(-50% + var(--pany, 0px))) scale(var(--zoom, 1)) scaleY(var(--sy)) rotate(45deg);
+  transition: transform .5s ease;
+  display: grid; grid-template-columns: repeat(11, 1fr); grid-template-rows: repeat(11, 1fr);
+  background: var(--frame); border-radius: 18px; padding: 0;
+  overflow: visible;
+  box-shadow: 10px 10px 0 var(--deep), 14px 14px 24px rgba(10, 34, 54, .35);
+}
+.board-wrap.follow .board, .board-wrap.follow::before { transition: transform .32s ease-out; }
+
+.cell {
+  --c: var(--ink); --on: #fff; --bg: #fff;
+  position: relative; display: flex; align-items: center; justify-content: center;
+  background: var(--bg);
+  box-shadow: inset 0 0 0 .5cqw var(--frame), inset 0 0 0 1.5cqw var(--c);
+  font-weight: 800; user-select: none;
+}
+/* Nomor dan ikon "tercetak" rata di permukaan pos: tidak diberi --bb (tegak menghadap kamera), jadi ikut
+   diputar dan dipipihkan bersama papan (perspektif isometrik). --face (diisi game.js, faceAngle) memutar tulisan
+   tiap sisi papan supaya menghadap ke luar seperti monopoli. Bidak dan gedung tengah tetap berdiri tegak. */
+.cell .tag { display: flex; flex-direction: column; align-items: center; gap: .3cqw; transform: rotate(var(--face, 0deg)); pointer-events: none; }
+.cell .num { padding: 0 1cqw; border-radius: 99px; background: var(--c); color: var(--on); font-size: 2.6cqw; line-height: 1.4; }
+.cell .ico { font-size: 2.4cqw; line-height: 1; }
+.cell .ico img { width: 5cqw; height: 5cqw; object-fit: contain; }
+.board > .cell:nth-child(2)  { border-top-left-radius: 18px; }
+.board > .cell:nth-child(12) { border-top-right-radius: 18px; }
+.board > .cell:nth-child(22) { border-bottom-right-radius: 18px; }
+.board > .cell:nth-child(32) { border-bottom-left-radius: 18px; }
+.cell.here { box-shadow: inset 0 0 0 .5cqw var(--frame), inset 0 0 0 1.8cqw var(--go); }
+
+.t-start  { --c: var(--ink); --bg: #e6eef5; }
+.t-mudah  { --c: var(--easy); --bg: var(--easy-bg); }
+.t-sedang { --c: var(--mid); --on: var(--ink); --bg: var(--mid-bg); }
+.t-sulit  { --c: var(--hard); --bg: var(--hard-bg); }
+.t-bonus, .t-event { --c: var(--bonus); --bg: var(--bonus-bg); }
+.t-khusus { --c: var(--spec); --bg: var(--spec-bg); }
+.t-start .num { font-size: 1.9cqw; }
+
+.center {
+  grid-column: 2 / 11; grid-row: 2 / 11; margin: 1.4cqw; border-radius: 4cqw;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2.4cqw; padding: 2cqw; text-align: center; color: #fff;
+  background-image: var(--board-img, none), var(--center-bg); background-size: cover; background-position: center;
+}
+.center .bld { font-size: 18cqw; line-height: 1; transform: var(--bb) translateY(-20%); filter: drop-shadow(0 1.5cqw 1cqw rgba(0, 0, 0, .4)); }
+.center .bld img { width: 30cqw; height: 30cqw; object-fit: contain; }
+.asset-img { width: 1.2em; height: 1.2em; object-fit: contain; vertical-align: -.2em; }
+
+/* ---------- Bidak ---------- */
+.piece {
+  position: absolute; left: 0; top: 0; z-index: 3;
+  width: calc(100% / 11); height: calc(100% / 11);
+  display: grid; place-items: center; pointer-events: none;
+  transition: left .28s ease, top .28s ease, transform .2s ease;
+  transform: translate(var(--ox, 0%), var(--oy, 0%)) scale(var(--sc, 1));
+}
+.piece span {
+  display: grid; place-items: center;
+  width: 110%; aspect-ratio: 1; border-radius: 50%;
+  background: #fff; font-size: 6.2cqw; line-height: 1;
+  transform: var(--bb) translateY(-45%);
+  box-shadow: 0 .8cqw 1.4cqw rgba(0, 0, 0, .35), 0 0 0 .5cqw var(--ring, var(--go));
+}
+.piece span img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
+.piece.hop span { animation: hop .3s ease; }
+.piece.active { z-index: 4; }
+.piece.snap { transition: none !important; }
+
+/* ---------- Pesan di bawah papan ---------- */
+.message {
+  flex: none; margin: 0; padding: 8px 14px; min-height: 42px;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff; border-radius: 14px; box-shadow: 0 3px 0 rgba(18, 48, 74, .12);
+  font-weight: 700; font-size: 15px; line-height: 1.25; text-align: center;
+}
+
+/* ---------- Panel kanan: giliran, keterangan, tombol ---------- */
+.panel {
+  min-height: 0; display: flex; flex-direction: column; gap: 10px;
+  padding: 14px 14px 14px; border-radius: 22px; color: #fff;
+  background: radial-gradient(circle at 15% 0%, rgba(63, 200, 196, .45), transparent 50%), linear-gradient(170deg, var(--lagoon), var(--frame) 80%);
+  box-shadow: 0 6px 0 rgba(18, 48, 74, .2);
+}
+.logo { margin: 0; font-size: 26px; line-height: 1; font-weight: 900; letter-spacing: -.01em; }
+.logo small { display: block; margin-top: 4px; font-size: 15px; font-weight: 700; color: #ffd9b0; letter-spacing: 0; }
+.turn { margin: 0; padding: 8px 12px; border-radius: 12px; background: rgba(10, 34, 54, .35); font-weight: 800; font-size: 16px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.legend { list-style: none; margin: 2px 0 0; padding: 0; display: grid; gap: 6px; font-size: 13px; font-weight: 700; }
+.legend li { display: flex; align-items: center; gap: 8px; }
+.legend i { width: 14px; height: 14px; border-radius: 5px; background: var(--c); box-shadow: 0 0 0 2px rgba(255, 255, 255, .85); }
+
+.dock { margin-top: auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.dice-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.stat { flex: 1; padding: 6px 10px; border-radius: 12px; background: rgba(10, 34, 54, .35); text-align: center; }
+.stat-label { display: block; font-size: 12px; font-weight: 700; opacity: .75; }
+.stat strong { display: inline-block; font-size: 26px; line-height: 1.1; }
+.stat strong.bump { animation: bump .45s ease; }
+#rollBtn { width: 100%; }
+#rollBtn:not(:disabled) { animation: ready 1.8s ease-in-out infinite; }
+.tools { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.tools .btn.tool { width: 100%; min-height: 50px; }
+
+/* ---------- Dadu ---------- */
+.dice {
+  flex: none; width: 62px; height: 62px; padding: 9px;
+  display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
+  background: var(--dice-bg, #fff); border-radius: 13px;
+  box-shadow: 0 4px 0 var(--dice-edge, rgba(0, 0, 0, .3)), var(--dice-glow, 0 0 0 transparent);
+}
+.pip { border-radius: 50%; }
+.pip.on { background: var(--dice-pip, var(--ink)); box-shadow: var(--pip-glow, none); }
+.dice.rolling { animation: tumble .35s linear infinite; }
+.dice.img-face { background-color: transparent; background-size: contain; background-repeat: no-repeat; background-position: center; box-shadow: none; }
+.dice.img-face .pip { visibility: hidden; }
+
+/* =====================================================================
+   KOTAK SOAL, PEMENANG, KONFIRMASI
+   ===================================================================== */
+.overlay { position: absolute; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; padding: 14px; background: rgba(10, 34, 54, .66); }
+.overlay.top { z-index: 20; }
+.card {
+  width: min(100%, 560px); max-height: 100%; overflow: auto;
+  background: #fff; border-radius: 22px; padding: 20px;
+  box-shadow: 0 8px 0 rgba(0, 0, 0, .22); animation: pop .25s ease;
+}
+.card:focus { outline: none; }
+.card.flash-good { animation: glowGood .6s ease; }
+.card.flash-bad { animation: shake .45s ease; }
+.q-card { width: min(100%, 780px); }
+
+.q-head { display: flex; align-items: center; gap: 10px; min-height: 36px; }
+.badge { display: inline-block; padding: 5px 14px; border-radius: 99px; font-weight: 800; font-size: 15px; color: #fff; background: var(--ink); }
+.b-mudah { background: var(--easy); }
+.b-sedang { background: var(--mid); color: var(--ink); }
+.b-sulit { background: var(--hard); }
+.b-bonus, .b-event { background: var(--bonus); }
+.b-khusus { background: var(--spec); }
+.fx { font-size: 28px; line-height: 1; }
+.fx img { width: 1.1em; height: 1.1em; object-fit: contain; }
+
+.timer { display: flex; align-items: center; gap: 10px; margin-left: auto; width: 230px; }
+.timer-bar { flex: 1; height: 12px; background: #e3eef6; border-radius: 99px; overflow: hidden; }
+.timer-bar i { display: block; height: 100%; width: 100%; background: var(--easy); border-radius: 99px; }
+.timer-text { min-width: 2ch; text-align: center; font-size: 24px; font-weight: 900; }
+.timer.low .timer-bar i { background: var(--hard); }
+.timer.low .timer-text { color: var(--hard); animation: bump .5s ease infinite; }
+
+.q-text { margin: 12px 0; font-size: 24px; line-height: 1.3; }
+.options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.opt {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  min-height: 62px; padding: 8px 14px; text-align: left;
+  font: inherit; font-weight: 700; font-size: 18px; line-height: 1.25; color: var(--ink);
+  background: #f2f8fc; border: 2px solid #c9dceb; border-radius: 14px; cursor: pointer; touch-action: manipulation;
+  transition: background .12s ease, transform .08s ease;
+}
+.opt:active:not(:disabled) { transform: scale(.98); }
+.opt .letter { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--ink); color: #fff; font-size: 15px; }
+.opt:disabled { cursor: default; }
+.opt.correct { background: var(--easy-bg); border-color: var(--easy); }
+.opt.correct .letter { background: var(--easy); }
+.opt.wrong { background: var(--hard-bg); border-color: var(--hard); }
+.opt.wrong .letter { background: var(--hard); }
+.opt.dim { opacity: .5; }
+
+.feedback { margin: 12px 0 0; padding: 10px 14px; border-radius: 12px; font-weight: 800; font-size: 17px; line-height: 1.4; }
+.feedback small { display: block; font-weight: 700; opacity: .8; margin-top: 2px; }
+.feedback.good { background: var(--easy-bg); }
+.feedback.bad { background: var(--hard-bg); }
+.feedback.info { background: #eef5fb; }
+#nextBtn { width: 100%; margin-top: 12px; }
+
+.win-card { width: min(100%, 640px); text-align: center; }
+.win-title { margin: 0 0 6px; font-size: 38px; font-weight: 900; animation: bump .8s ease; }
+.win-card p { margin: 0; font-weight: 700; }
+.rtable { width: 100%; border-collapse: collapse; margin: 14px 0; }
+.rtable th, .rtable td { padding: 8px; border-bottom: 1px solid #dbe8f2; text-align: center; font-weight: 800; }
+.rtable td:first-child { text-align: left; font-weight: 700; }
+.rtable th.winner { background: var(--go); color: #fff; border-radius: 10px 10px 0 0; }
+.win-actions { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 10px; }
+.confirm-card { width: min(100%, 520px); text-align: center; }
+.confirm-text { margin: 4px 0 18px; font-size: 19px; font-weight: 800; line-height: 1.4; }
+
+.toast {
+  position: absolute; left: 50%; bottom: 16px; z-index: 30; transform: translateX(-50%);
+  max-width: 80%; margin: 0; padding: 10px 18px; border-radius: 14px;
+  background: var(--deep); color: #fff; font-weight: 700; font-size: 14px; line-height: 1.35; text-align: center;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .35); animation: pop .2s ease;
+}
+
+/* =====================================================================
+   LAYAR PEMBUKA
+   ===================================================================== */
+.splash {
+  position: absolute; inset: 0; z-index: 40;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; color: #fff; cursor: pointer; padding-bottom: 96px;
+  /* GANTI LATAR DI SINI: simpan gambar PNG Anda dengan nama latar-pembuka.png di folder yang sama dengan index.html.
+     Jika file tidak ada, gradasi di bawahnya dipakai sebagai cadangan. */
+  background:
+    url("latar-pembuka.png") center / cover no-repeat,
+    radial-gradient(circle at 50% 28%, rgba(63, 200, 196, .55), transparent 55%),
+    linear-gradient(165deg, var(--lagoon), var(--deep) 85%);
+  transition: opacity .4s ease, transform .4s ease;
+}
+/* bayangan tipis di bagian bawah supaya tombol dan tulisan tetap terbaca di atas gambar apa pun */
+.splash::before { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(10, 34, 54, .4), transparent 45%); pointer-events: none; }
+.splash-art, .splash-title { position: relative; }
+.splash-title { text-shadow: 0 3px 12px rgba(10, 34, 54, .45); }
+.credit { text-shadow: 0 1px 4px rgba(10, 34, 54, .6); }
+.splash.out { opacity: 0; transform: scale(1.04); pointer-events: none; }
+.splash-art {
+  display: grid; place-items: center; width: 168px; height: 168px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, .22), rgba(255, 255, 255, .05) 70%);
+  box-shadow: 0 0 0 12px rgba(255, 255, 255, .07), 0 0 0 26px rgba(255, 255, 255, .04);
+  animation: floaty 4s ease-in-out infinite;
+}
+.splash-art .hero-ico { font-size: 72px; }
+.splash-art .hero-ico .asset-img { width: 140px; height: 140px; }
+.splash-title { margin: 28px 0 0; font-size: 66px; line-height: 1; font-weight: 900; letter-spacing: -.015em; }
+.splash-title small { display: block; margin-top: 8px; font-size: 32px; font-weight: 700; color: #ffd9b0; letter-spacing: 0; }
+.splash-bottom { position: absolute; left: 0; right: 0; bottom: 16px; display: grid; justify-items: center; gap: 10px; }
+.splash-bottom .btn { min-width: 320px; }
+.splash-bottom .btn.primary { animation: ready 1.8s ease-in-out infinite; }
+.credit { margin: 0; font-size: 10px; font-weight: 600; letter-spacing: .04em; opacity: .55; }
+.splash-fs { position: absolute; left: 20px; bottom: 20px; }
+
+/* =====================================================================
+   PEMBERITAHUAN PUTAR LAYAR (HP/tablet posisi tegak)
+   ===================================================================== */
+.putar {
+  display: none; position: fixed; inset: 0; z-index: 1000;
+  align-items: center; justify-content: center; padding: 24px;
+  background: linear-gradient(160deg, var(--lagoon), var(--deep)); color: #fff; text-align: center;
+}
+html.tegak .putar { display: flex; }
+.putar-box { width: min(100%, 360px); display: grid; gap: 14px; justify-items: center; }
+.putar h2 { margin: 6px 0 0; font-size: 24px; line-height: 1.2; font-weight: 900; }
+.putar p { margin: 0; font-size: 15px; line-height: 1.45; font-weight: 600; opacity: .9; }
+.putar .btn.big { width: 100%; margin-top: 8px; font-size: 17px; line-height: 1.2; white-space: normal; }
+.phone { position: relative; width: 56px; height: 98px; margin-bottom: 8px; border: 5px solid #fff; border-radius: 13px; animation: turnPhone 2.8s ease-in-out infinite; }
+.phone i { position: absolute; left: 50%; bottom: 7px; width: 16px; height: 4px; margin-left: -8px; border-radius: 4px; background: #fff; opacity: .8; }
+
+/* =====================================================================
+   ANIMASI
+   ===================================================================== */
+@keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes screenIn { from { opacity: 0; transform: scale(.985); } to { opacity: 1; transform: none; } }
+@keyframes tumble { 0% { transform: rotate(0) scale(1); } 50% { transform: rotate(180deg) scale(1.12); } 100% { transform: rotate(360deg) scale(1); } }
+@keyframes hop { 0%, 100% { transform: var(--bb) translateY(-45%); } 50% { transform: var(--bb) translateY(-90%); } }
+@keyframes pop { from { transform: scale(.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes bump { 0%, 100% { transform: scale(1); } 40% { transform: scale(1.35); } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-7px); } 40%, 80% { transform: translateX(7px); } }
+@keyframes glowGood { 0% { box-shadow: 0 8px 0 rgba(0, 0, 0, .22), 0 0 0 0 rgba(47, 184, 114, .8); } 100% { box-shadow: 0 8px 0 rgba(0, 0, 0, .22), 0 0 0 22px rgba(47, 184, 114, 0); } }
+@keyframes ready { 0%, 100% { box-shadow: 0 4px 0 var(--go-dark), 0 0 0 0 rgba(255, 138, 31, .55); } 60% { box-shadow: 0 4px 0 var(--go-dark), 0 0 0 12px rgba(255, 138, 31, 0); } }
+@keyframes turnGlow { 0%, 100% { box-shadow: 0 3px 0 rgba(18, 48, 74, .14), 0 0 0 0 transparent; } 50% { box-shadow: 0 3px 0 rgba(18, 48, 74, .14), 0 0 0 4px rgba(255, 255, 255, .9); } }
+@keyframes turnPhone { 0%, 22% { transform: rotate(0); } 52%, 84% { transform: rotate(-90deg); } 100% { transform: rotate(0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* =====================================================================
+   POS EVENT: 3 kartu
+   ===================================================================== */
+.ev-box { width: min(100%, 680px); text-align: center; }
+.ev-box .q-head { justify-content: center; }
+.ev-hint { margin: 0 0 12px; font-weight: 700; opacity: .75; }
+.ev-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; perspective: 900px; }
+.evc { padding: 0; border: 0; background: none; font: inherit; color: var(--ink); cursor: pointer; touch-action: manipulation; height: 190px; }   /* tinggi tetap agar muat di bingkai 540px */
+.evc:disabled { cursor: default; color: var(--ink); }
+.evc-inner { position: relative; display: block; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .45s ease; }
+.evc.open .evc-inner { transform: rotateY(180deg); }
+.evc-face {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px; border-radius: 16px; color: var(--ink);
+  -webkit-backface-visibility: hidden; backface-visibility: hidden;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, .22);
+}
+.evc-back { color: #fff; background: radial-gradient(circle at 30% 20%, #b69cff, var(--bonus) 55%, #5b34c9); border: 4px solid #fff; }
+.evc-q { font-size: 64px; line-height: 1; font-weight: 900; text-shadow: 0 3px 0 rgba(0, 0, 0, .25); }
+.evc-back small { font-weight: 800; opacity: .85; }
+.evc-front { transform: rotateY(180deg); background: var(--bonus-bg); border: 4px solid var(--bonus); }
+.evc-ico { font-size: 52px; line-height: 1; }
+.evc-ico .asset-img { width: 64px; height: 64px; }
+.evc-name { font-size: 22px; font-weight: 900; }
+.evc-front small { font-size: 13px; font-weight: 700; line-height: 1.3; }
+.evc:not(:disabled):hover .evc-inner { transform: translateY(-4px); }
+.evc:not(:disabled):active .evc-inner { transform: scale(.97); }
+.evc.dim { opacity: .45; }
+.ev-box .feedback { text-align: left; }
+#evNext { width: 100%; margin-top: 12px; }
+
+/* bidak muncul setelah teleportasi */
+@keyframes warp {
+  0% { transform: var(--bb) translateY(-45%) scale(0); opacity: 0; }
+  60% { transform: var(--bb) translateY(-70%) scale(1.25); opacity: 1; }
+  100% { transform: var(--bb) translateY(-45%) scale(1); opacity: 1; }
+}
+.piece.warp span { animation: warp .6s ease; }
+
+/* pemain tertahan kemacetan: melewati giliran berikutnya */
+.player.skip { position: relative; }
+.player.skip::after {
+  content: "🚧 Macet"; position: absolute; right: 8px; top: -9px;
+  padding: 1px 8px; border-radius: 99px; background: var(--go); color: #fff; font-size: 11px; font-weight: 800; box-shadow: 0 2px 0 rgba(0, 0, 0, .2);
+}
+
+/* ===== pemain komputer (com) ===== */
+.prow-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.ptype { flex: none; display: grid; grid-auto-flow: column; gap: 3px; }
+.ptype-btn {
+  min-height: 26px; padding: 0 9px; font: inherit; font-weight: 800; font-size: 12px; line-height: 1; color: var(--ink);
+  background: #fff; border: 2px solid #c9dceb; border-radius: 9px; cursor: pointer; touch-action: manipulation;
+}
+.ptype-btn[aria-pressed="true"] { background: var(--go); border-color: var(--go-dark); color: #fff; }
+.ptype-btn:disabled { opacity: .35; cursor: not-allowed; }
+/* giliran com: pemain hanya menonton, jawaban dan kartu tidak bisa diketuk */
+.q-card.com-turn .opt, .ev-box.com-turn .evc { pointer-events: none; }
+
+/* ===== pos Free Will ===== */
+.t-freewill { --c: var(--free); --bg: var(--free-bg); }
+.b-freewill { background: var(--free); }
+.fw-box { width: min(100%, 700px); text-align: center; }
+.fw-box .q-head { justify-content: center; }
+.fw-btns { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+.fw-btn {
+  grid-column: span 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  min-height: 84px; padding: 8px 6px; font: inherit; color: var(--ink);
+  background: var(--bg); border: 3px solid var(--c); border-radius: 16px; box-shadow: 0 4px 0 var(--c);
+  cursor: pointer; touch-action: manipulation; transition: transform .12s ease, opacity .2s ease;
+}
+.fw-btn:nth-child(n+4) { grid-column: span 3; }
+.fw-btn b { font-size: 18px; font-weight: 900; }
+.fw-btn small { font-size: 12px; font-weight: 700; opacity: .75; }
+.fw-btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 var(--c); }
+.fw-btn:disabled { cursor: default; }
+.fw-btn.dim { opacity: .35; }
+.fw-btn.on { background: var(--c); color: var(--on, #fff); }
+.fw-box.com-turn .fw-btn { pointer-events: none; }
+
+/* =====================================================================
+   MENU HALAMAN 2: pemain, map, dadu
+   ===================================================================== */
+.setup {
+  position: absolute; inset: 0;
+  display: grid; grid-template-columns: minmax(0, 1fr) 300px; grid-template-rows: minmax(0, 1fr) auto;
+  gap: 12px 16px; padding: 16px 20px;
+}
+.setup .f-players { min-height: 0; }
+.setup .home-actions { grid-column: 1 / -1; }
+.setup-side { display: grid; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; min-height: 0; }
+.f-map, .f-dice { display: flex; flex-direction: column; padding-left: 12px; padding-right: 12px; }
+.f-map > legend small, .f-dice > legend small { font-size: 12px; }
+
+.opts { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.opt-card {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
+  min-width: 0; padding: 8px 4px 7px; font: inherit; color: var(--ink);
+  background: #f2f8fc; border: 2px solid #c9dceb; border-radius: 14px; cursor: pointer; touch-action: manipulation;
+  transition: background .15s ease, transform .1s ease;
+}
+.opt-card b { max-width: 100%; font-size: 13px; font-weight: 900; line-height: 1.1; text-align: center; }
+.opt-card:active { transform: translateY(1px); }
+.opt-card[aria-pressed="true"] { background: var(--go); border-color: var(--go-dark); color: #fff; box-shadow: 0 3px 0 var(--go-dark); }
+
+/* pratinjau map: latar belakang + papan mini */
+.map-prev {
+  position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 16 / 11; overflow: hidden;
+  border-radius: 10px; box-shadow: inset 0 0 0 2px rgba(18, 48, 74, .3);
+  background-image: var(--stage-img, none), var(--stage-bg); background-size: cover; background-position: center;
+}
+.map-prev::before {
+  content: ""; position: absolute; left: 50%; top: 52%; width: 46%; aspect-ratio: 1;
+  transform: translate(-50%, -50%) scaleY(.58) rotate(45deg);
+  border: 3px solid var(--frame); border-radius: 5px;
+  background-image: var(--board-img, none), var(--center-bg); background-size: cover; background-position: center;
+  box-shadow: 3px 3px 0 var(--deep);
+}
+.map-emo { position: relative; z-index: 1; font-size: 22px; line-height: 1; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .35)); }
+
+/* pratinjau dadu: memakai gaya .dice yang sama dengan dadu permainan */
+.dice.dprev { width: 54px; height: 54px; padding: 8px; border-radius: 12px; }
+
+/* =====================================================================
+   PETUNJUK BERMAIN (pop up)
+   ===================================================================== */
+.help-card { width: min(100%, 800px); height: min(100%, 500px); gap: 10px; }
+.help-tabs { flex: none; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
+.tab-btn {
+  min-height: 42px; padding: 4px 8px; font: inherit; font-weight: 900; font-size: 16px; color: var(--ink);
+  background: #f2f8fc; border: 2px solid #c9dceb; border-radius: 12px; cursor: pointer; touch-action: manipulation;
+}
+.tab-btn[aria-selected="true"] { background: var(--go); border-color: var(--go-dark); color: #fff; box-shadow: 0 3px 0 var(--go-dark); }
+.help-body { flex: 1; min-height: 0; overflow-y: auto; padding: 2px 8px 4px 2px; font-size: 15px; line-height: 1.4; font-weight: 600; }
+.help-body::-webkit-scrollbar { width: 8px; }
+.help-body::-webkit-scrollbar-thumb { background: #c9dceb; border-radius: 99px; }
+.help-body h3 { margin: 14px 0 6px; font-size: 16px; font-weight: 900; }
+.help-body h3:first-child { margin-top: 2px; }
+.help-body p { margin: 0 0 6px; }
+.h-steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; counter-reset: h; }
+.h-steps li { position: relative; padding: 8px 12px 8px 46px; border-radius: 12px; background: #f2f8fc; counter-increment: h; }
+.h-steps li::before {
+  content: counter(h); position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--go); color: #fff; font-weight: 900; font-size: 14px;
+}
+.h-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.h-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; background: #f2f8fc; min-width: 0; }
+.h-row > span:last-child { min-width: 0; }
+.h-row b { display: block; font-size: 15px; font-weight: 900; line-height: 1.2; }
+.h-row small { display: block; font-size: 13px; font-weight: 600; line-height: 1.3; opacity: .85; }
+.h-sw {
+  flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; font-size: 22px; line-height: 1;
+  background: var(--bg, #fff); box-shadow: inset 0 0 0 4px var(--c, var(--ink));
+}
+.h-sw .asset-img { width: 24px; height: 24px; }
+.h-ev { align-items: flex-start; }
+.h-ev .h-sw { width: 38px; height: 38px; background: var(--bonus-bg); box-shadow: inset 0 0 0 3px var(--bonus); }
+.h-note { margin-top: 8px; padding: 8px 12px; border-radius: 12px; background: #fff3c9; font-size: 14px; }
+
+/* halaman 2: label pemain dan tombol Player/Com tidak boleh patah baris */
+.count-pick { white-space: nowrap; }
+.prow-name label { white-space: nowrap; }
+.prow-head { gap: 4px; }
+.ptype-btn { padding: 0 7px; font-size: 11px; }
+.h-steps li { padding-top: 6px; padding-bottom: 6px; }
+
+/* =====================================================================
+   MODE PERMAINAN & TRUE EXPLORER (beli / ambil alih pos)
+   ===================================================================== */
+.setup-left { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 12px; min-height: 0; }
+.setup-left > .f-players { min-height: 0; }
+.f-mode { padding: 6px 12px 12px; }
+.mode-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.mode-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 6px 8px; text-align: left;
+  font: inherit; color: var(--ink); background: #f2f8fc; border: 2px solid #c9dceb; border-radius: 14px; cursor: pointer; touch-action: manipulation;
+  transition: background .15s ease, transform .1s ease;
+}
+.mode-btn:active { transform: translateY(1px); }
+.mode-btn[aria-pressed="true"] { background: var(--go); border-color: var(--go-dark); color: #fff; box-shadow: 0 3px 0 var(--go-dark); }
+.mode-ico { flex: none; font-size: 20px; line-height: 1; }
+.mode-name { font-size: 13px; font-weight: 900; line-height: 1.1; white-space: nowrap; }
+.mode-desc { margin: 8px 0 0; padding: 8px 12px; min-height: 2.6em; border-radius: 12px; background: #eaf4fb; border: 2px dashed #c9dceb; font-size: 12px; font-weight: 700; line-height: 1.3; color: var(--ink); }
+
+/* pos yang sudah dimiliki berubah menjadi warna pemiliknya (warna sama dengan lingkaran kartu pemain) */
+.cell.own-p0 { --c: #b25a00; --bg: var(--pl0); --on: #fff; }
+.cell.own-p1 { --c: #8f1068; --bg: var(--pl1); --on: #fff; }
+.cell.own-p2 { --c: #5a3a1b; --bg: var(--pl2); --on: #fff; }
+.cell.own-p3 { --c: #3f4652; --bg: var(--pl3); --on: #fff; }
+@keyframes buyPop { 0% { filter: brightness(1.9); } 100% { filter: none; } }
+.cell.bought { animation: buyPop .9s ease; }
+/* rumah / hotel di pos yang sudah dibeli (level naik tiap ada bidak berhenti di pos itu) */
+.cell .bld { position: absolute; top: .2cqw; right: .5cqw; font-size: 2.4cqw; line-height: 1; letter-spacing: -.3cqw; pointer-events: none; transform: rotate(var(--face, 0deg)); filter: drop-shadow(0 .2cqw .2cqw rgba(0,0,0,.35)); }
+.cell .bld[hidden] { display: none; }
+
+/* jendela tawaran beli / ambil alih */
+.b-prop { background: var(--go); }
+.prop-box { width: min(100%, 520px); text-align: center; }
+.prop-box .q-head { justify-content: center; }
+.prop-info { display: grid; gap: 6px; margin: 0 0 14px; text-align: left; }
+.prop-info div { display: flex; justify-content: space-between; gap: 10px; padding: 8px 12px; border-radius: 12px; background: #eef5fb; font-weight: 800; }
+.prop-info div.hl { background: var(--mid-bg); }
+.prop-btns { display: grid; grid-template-columns: 1.4fr 1fr; gap: 10px; }
+.prop-btns .btn.dim { opacity: .35; }
+.prop-box.com-turn .prop-btns .btn { pointer-events: none; }
+
+/* =====================================================================
+   SKILL PEMAIN (True Explorer)
+   ===================================================================== */
+.col-main { position: relative; }
+/* label skill di kartu pemain */
+.pskill {
+  display: flex; align-items: center; gap: 4px; width: fit-content; max-width: 100%; margin-top: 3px; padding: 1px 8px 1px 5px;
+  border-radius: 99px; background: var(--bonus-bg); color: #5b34c9; font-size: 11px; font-weight: 800; line-height: 1.25; white-space: nowrap;
+}
+.pskill .sk-ico { flex: none; font-size: 12px; line-height: 1; }
+.pskill .asset-img { width: 14px; height: 14px; }
+.pskill .sk-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.pskill.fire { animation: skillFire .9s ease; }
+@keyframes skillFire { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(139, 92, 246, .8); } 35% { transform: scale(1.18); } 100% { transform: scale(1); box-shadow: 0 0 0 10px rgba(139, 92, 246, 0); } }
+/* notifikasi kecil saat skill aktif: kiri atas, di bawah kartu pemain 1; top diisi game.js */
+.skill-feed { position: absolute; left: 0; top: 78px; z-index: 15; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; max-width: 320px; pointer-events: none; }
+.skill-note {
+  display: flex; align-items: center; gap: 8px; padding: 6px 12px 6px 8px; border-radius: 12px; border-left: 4px solid var(--bonus);
+  background: rgba(10, 34, 54, .92); color: #fff; font-weight: 700; font-size: 13px; line-height: 1.25;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .35); animation: noteIn .25s ease; transition: opacity .35s ease, transform .35s ease;
+}
+.skill-note.out { opacity: 0; transform: translateX(-12px); }
+.sn-ico { flex: none; font-size: 20px; line-height: 1; }
+.sn-ico .asset-img { width: 22px; height: 22px; }
+@keyframes noteIn { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
+.sk-taken { margin: 10px 0 0; min-height: 1.3em; font-size: 13px; font-weight: 700; opacity: .75; }
+
+/* ===== Mode Survivor: pemain gugur ===== */
+.player.out { filter: grayscale(1); opacity: .45; animation: none; border-color: transparent; }
+.player.out .pname { text-decoration: line-through; }
+.player.out.active { animation: none; }
+.piece[hidden] { display: none; }
+.skill-note.elim-note { border-color: #e5484d; }
+.count-btns button:disabled, #countBtns button:disabled { opacity: .35; cursor: not-allowed; }
+
+/* info putaran (di bawah info giliran, semua mode) */
+.round { margin: -4px 0 0; padding: 0 12px; font-size: 11px; font-weight: 700; line-height: 1.2; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

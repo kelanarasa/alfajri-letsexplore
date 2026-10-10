@@ -1,0 +1,19 @@
+CARA MENAMBAH PELAJARAN / SOAL BARU
+(Semua file ada di folder yang sama dengan index.html. Untuk mengganti soal pelajaran yang sudah ada, cukup edit file-nya, mis. soal/ips.js, lalu lewati ke langkah 5.)
+
+1. Salin soal/_TEMPLATE.js, ganti namanya menjadi soal/pkn.js (nama bebas, tanpa spasi).
+2. Buka file itu di Notepad. Ubah id (unik), nama, ikon, deskripsi.
+3. Isi soal, satu baris per soal:
+     Soal.q('mudah', 'Pertanyaan?', 'JAWABAN BENAR', 'salah 1', 'salah 2', 'salah 3'),
+   - tingkat: 'mudah', 'sedang', atau 'sulit'
+   - jawaban benar SELALU ditulis pertama; urutan A-D diacak otomatis saat main
+   - setiap baris diakhiri koma. Hindari tanda kutip tunggal (') di dalam teks, atau tulis \'
+   - sarankan minimal 10 soal per tingkat supaya tidak cepat berulang
+4. Buka index.html, tambahkan satu baris ini di bawah baris soal/ips.js (harus SEBELUM game.js):
+     <script src="soal/pkn.js"></script>
+5. Simpan, lalu buka atau refresh index.html. Tombol pelajaran baru muncul di menu awal,
+   lengkap dengan jumlah soal per tingkat. Pelajaran yang dipilih di menu itulah yang dipakai saat permainan.
+
+Jika pelajaran tidak muncul, atau ada tulisan ⚠ di bawah tombol: tekan F12, buka tab Console;
+pesan [Soal] menyebut soal urutan ke berapa yang formatnya salah.
+Untuk menghapus pelajaran: hapus barisnya di index.html (file boleh dihapus juga).
